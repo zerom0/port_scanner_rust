@@ -1,3 +1,8 @@
+pub fn parse_single_port(port_spec: &str) -> Vec<u16> {
+    let port: u16 = port_spec.parse().expect("Invalid port number");
+    vec![port]
+}
+
 pub fn parse_port_range(port_spec: &str) -> Vec<u16> {
     let (from, to) = port_spec.split_once('-').expect("Invalid port range");
     let from = from.parse::<u16>().expect("Invalid port range (from)");

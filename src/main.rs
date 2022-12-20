@@ -1,31 +1,39 @@
-use std::env::args;
+use clap::Parser;
 use std::net::{SocketAddr, SocketAddrV4, TcpStream};
 use std::str::FromStr;
 use std::thread::JoinHandle;
 use std::time::Duration;
-
 mod argument_parser;
 
+#[derive(Parser)]
+struct CLI {
+    /// IP address to scan
+    address: String,
+    /// scan single port, e.g. 80
+    #[arg(short)]
+    single: Option<String>,
+    /// scan port range, e.g. 20-25
+    #[arg(short)]
+    range: Option<String>,
+    /// scan port list, e.g. 22,25,80,443
+    #[arg(short)]
+    list: Option<String>,
+}
+
 fn main() {
-    let args: Vec<String> = args().collect();
-    if args.len() != 4 {
-        panic!("Invalid arguments")
-    }
+    let cli = CLI::parse();
 
-    let ip_address = &args[1];
-    let mode = &args[2];
-    let port_spec = &args[3];
-
-    let ports = match mode.as_str() {
-        "-s" => {
-            let port: u16 = port_spec.parse().expect("Invalid port number");
-            vec![port]
-        }
-        "-r" => argument_parser::parse_port_range(port_spec),
-        "-l" => argument_parser::parse_port_list(port_spec),
-        _ => panic!("Unknown port specification"),
+    let ports = if let Some(port_spec) = cli.single {
+        argument_parser::parse_single_port(&port_spec)
+    } else if let Some(port_spec) = cli.range {
+        argument_parser::parse_port_range(&port_spec)
+    } else if let Some(port_spec) = cli.list {
+        argument_parser::parse_port_list(&port_spec)
+    } else {
+        panic!("Unknown port specification")
     };
-    scan_ports(ip_address, &ports);
+
+    scan_ports(&cli.address, &ports);
 }
 
 fn scan_ports(ip_address: &str, ports: &Vec<u16>) {
