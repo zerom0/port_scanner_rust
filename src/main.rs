@@ -3,6 +3,8 @@ use std::net::{SocketAddr, SocketAddrV4, TcpStream};
 use std::str::FromStr;
 use std::time::Duration;
 
+mod argument_parser;
+
 fn main() {
     let args: Vec<String> = args().collect();
     if args.len() != 4 {
@@ -18,10 +20,7 @@ fn main() {
 
         scan_port(ip_address, &port)
     } else if mode == "-r" {
-        let (from, to) = port_spec.split_once('-').expect("Invalid port range");
-        let from = from.parse::<u16>().expect("Invalid port range (from)");
-        let to = to.parse::<u16>().expect("Invalid port range (to)");
-        let ports = (from..=to).collect();
+        let ports = argument_parser::parse_port_range(port_spec);
         scan_ports(ip_address, &ports);
     }
 }
