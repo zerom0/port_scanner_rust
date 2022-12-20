@@ -5,17 +5,34 @@ use std::time::Duration;
 
 fn main() {
     let args: Vec<String> = args().collect();
-    if args.len() != 4 || args[2] != "-s" {
+    if args.len() != 4 {
         panic!("Invalid arguments")
     }
 
     let ip_address = &args[1];
-    let port: u16 = args[3].parse().expect("Invalid port number");
+    let mode = &args[2];
+    let port_spec = &args[3];
 
-    scan_port(ip_address, port)
+    if mode == "-s" {
+        let port: u16 = port_spec.parse().expect("Invalid port number");
+
+        scan_port(ip_address, &port)
+    } else if mode == "-r" {
+        let (from, to) = port_spec.split_once('-').expect("Invalid port range");
+        let from = from.parse::<u16>().expect("Invalid port range (from)");
+        let to = to.parse::<u16>().expect("Invalid port range (to)");
+        let ports = (from..=to).collect();
+        scan_ports(ip_address, &ports);
+    }
 }
 
-fn scan_port(ip_address: &str, port: u16) {
+fn scan_ports(ip_address: &str, ports: &Vec<u16>) {
+    for port in ports {
+        scan_port(ip_address, port);
+    }
+}
+
+fn scan_port(ip_address: &str, port: &u16) {
     let address_string = format!("{}:{}", ip_address, port);
     let address_v4 = SocketAddrV4::from_str(&address_string).expect("Invalid address");
     let address = SocketAddr::from(address_v4);
