@@ -15,14 +15,21 @@ fn main() {
     let mode = &args[2];
     let port_spec = &args[3];
 
-    if mode == "-s" {
-        let port: u16 = port_spec.parse().expect("Invalid port number");
-
-        scan_port(ip_address, &port)
-    } else if mode == "-r" {
-        let ports = argument_parser::parse_port_range(port_spec);
-        scan_ports(ip_address, &ports);
+    let mut ports = Vec::new();
+    match mode.as_str() {
+        "-s" => {
+            let port: u16 = port_spec.parse().expect("Invalid port number");
+            ports.push(port);
+        }
+        "-r" => {
+            ports = argument_parser::parse_port_range(port_spec);
+        }
+        "-l" => {
+            ports = argument_parser::parse_port_list(port_spec);
+        }
+        _ => panic!("Unknown port specification"),
     }
+    scan_ports(ip_address, &ports);
 }
 
 fn scan_ports(ip_address: &str, ports: &Vec<u16>) {
