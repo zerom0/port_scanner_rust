@@ -9,11 +9,15 @@ fn main() {
         panic!("Invalid arguments")
     }
 
-    let address_string = format!("{}:{}", args[1], args[3]);
-    let address_v4 = match SocketAddrV4::from_str(&address_string) {
-        Ok(x) => x,
-        Err(_) => panic!("Invalid address {}", address_string),
-    };
+    let ip_address = &args[1];
+    let port: u16 = args[3].parse().expect("Invalid port number");
+
+    scan_port(ip_address, port)
+}
+
+fn scan_port(ip_address: &str, port: u16) {
+    let address_string = format!("{}:{}", ip_address, port);
+    let address_v4 = SocketAddrV4::from_str(&address_string).expect("Invalid address");
     let address = SocketAddr::from(address_v4);
     let timeout = Duration::from_secs(3);
 
