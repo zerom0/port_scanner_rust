@@ -1,6 +1,7 @@
 use std::env::args;
 use std::net::{SocketAddr, SocketAddrV4, TcpStream};
 use std::str::FromStr;
+use std::thread::JoinHandle;
 use std::time::Duration;
 
 mod argument_parser;
@@ -28,19 +29,27 @@ fn main() {
 }
 
 fn scan_ports(ip_address: &str, ports: &Vec<u16>) {
+    let mut joinhandles = Vec::new();
+
     for port in ports {
-        scan_port(ip_address, port);
+        joinhandles.push(scan_port(ip_address, port));
+    }
+
+    for joinhandle in joinhandles {
+        joinhandle.join().unwrap();
     }
 }
 
-fn scan_port(ip_address: &str, port: &u16) {
+fn scan_port(ip_address: &str, port: &u16) -> JoinHandle<()> {
     let address_string = format!("{}:{}", ip_address, port);
     let address_v4 = SocketAddrV4::from_str(&address_string).expect("Invalid address");
     let address = SocketAddr::from(address_v4);
     let timeout = Duration::from_secs(3);
 
-    match TcpStream::connect_timeout(&address, timeout) {
-        Ok(_) => println!("Port {} is open ✅", address_v4.port()),
-        _ => println!("Port {} is NOT open 🛑", address_v4.port()),
-    }
+    std::thread::spawn(
+        move || match TcpStream::connect_timeout(&address, timeout) {
+            Ok(_) => println!("Port {} is open ✅", address_v4.port()),
+            _ => println!("Port {} is NOT open 🛑", address_v4.port()),
+        },
+    )
 }
